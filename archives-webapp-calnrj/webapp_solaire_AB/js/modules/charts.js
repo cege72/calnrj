@@ -1,0 +1,2 @@
+import { state } from './state.js';let currentCharts={};function destroyChart(name){if(currentCharts[name]){currentCharts[name].destroy();currentCharts[name]=null;}}
+export function drawPie(id){destroyChart(id);const ctx=document.getElementById(id);currentCharts[id]=new Chart(ctx,{type:'pie',data:{labels:['HP','HC'],datasets:[{data:[state.compute.hp_kwh,state.compute.hc_kwh],backgroundColor:['#e74c3c','#27ae60']}]},options:{responsive:true}});}

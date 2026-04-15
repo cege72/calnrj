@@ -1,0 +1,2 @@
+export function initUI(){document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>loadTab(btn.dataset.tab));loadTab('params');}
+function loadTab(t){import('./'+t+'.js').then(m=>m.render());}

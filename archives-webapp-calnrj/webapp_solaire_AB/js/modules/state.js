@@ -1,0 +1,1 @@
+export const state={data:null,prod:null,params:{priceHP:0.2,priceHC:0.15,hcStart:1320,hcEnd:480}};

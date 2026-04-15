@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebApp Solaire — HP/HC & Production</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <meta name="color-scheme" content="dark light">
+</head>
+<body>
+  <!-- Icons -->
+  <div id="svg-sprite" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="icon-sun" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 4a1 1 0 0 0 1-1V2a1 1 0 1 0-2 0v1a1 1 0 0 0 1 1Zm0 16a1 1 0 0 0-1 1v1a1 1 0 1 0 2 0v-1a1 1 0 0 0-1-1ZM4 13a1 1 0 0 0-1-1H2a1 1 0 1 0 0 2h1a1 1 0 0 0 1-1Zm18-1a1 1 0 0 0-1 1 1 1 0 0 0 1 1h1a1 1 0 1 0 0-2h-1ZM5.64 6.05a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41L6.34 3.93a1 1 0 1 0-1.41 1.41l.71.71Zm11.31 11.31a1 1 0 0 0-1.41 1.41l.71.71a1 1 0 0 0 1.41-1.41l-.71-.71ZM3.93 17.66a1 1 0 0 0 1.41 0l.71-.71a1 1 0 0 0-1.41-1.41l-.71.71a1 1 0 0 0 0 1.41Zm14.14-11.31a1 1 0 0 0 0 1.41l.71.71a1 1 0 1 0 1.41-1.41l-.71-.71a1 1 0 0 0-1.41 0ZM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"/>
+  </symbol>
+  <symbol id="icon-moon" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M21 12.79A9 9 0 0 1 11.21 3 7 7 0 1 0 21 12.79Z"/>
+  </symbol>
+  <symbol id="icon-auto" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2a1 1 0 0 1 .93.63l2.09 5.08 5.5.4a1 1 0 0 1 .57 1.76l-4.19 3.57 1.29 5.35a1 1 0 0 1-1.48 1.09L12 17.77l-4.21 2.11a1 1 0 0 1-1.48-1.09l1.29-5.35L3.41 9.87a1 1 0 0 1 .57-1.76l5.5-.4L11.07 2.63A1 1 0 0 1 12 2Z"/>
+  </symbol>
+</svg></div>
+
+  <header class="app-header">
+    <h1>WebApp Solaire</h1>
+    <div class="theme-toggle">
+      <label for="theme-select" class="sr-only">Thème</label>
+      <select id="theme-select" title="Thème">
+        <option value="auto">Auto</option>
+        <option value="light">☀️ Jour</option>
+        <option value="dark">🌙 Nuit</option>
+      </select>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Navigation principale">
+    <button class="tab active" data-tab="home" role="tab" aria-selected="true">Accueil</button>
+    <button class="tab" data-tab="settings" role="tab">Paramètres</button>
+    <button class="tab" data-tab="summary" role="tab">Synthèse</button>
+    <button class="tab" data-tab="consumption" role="tab">Consommation</button>
+    <button class="tab" data-tab="production" role="tab">Production</button>
+  </nav>
+
+  <main id="app" class="container">
+    <section id="view-home" class="view active">
+      <h2>Bienvenue</h2>
+      <p>Chargez vos données de consommation et (optionnel) de production, configurez vos tarifs et horaires HP/HC, et la WebApp calcule automatiquement si l'option Heures Creuses est rentable.</p>
+      <ul>
+        <li>Fonctionne 100% en local, aucune donnée n'est transmise.</li>
+        <li>CSV ou Excel (.xls/.xlsx), pas d'ordre imposé pour les colonnes.</li>
+        <li>Détection automatique: pas (15 ou 30 min), unité (W/Wh/kWh) — par défaut en <strong>W</strong>.</li>
+        <li>Mode sombre/clair automatique avec bascule manuelle.</li>
+        <li>Graphiques et tableaux responsive.</li>
+      </ul>
+      <p class="tip">Astuce: renseignez les tarifs Base et HP/HC et les horaires HC pour comparer les factures et visualiser les économies potentielles.</p>
+    </section>
+
+    <section id="view-settings" class="view">
+      <h2>Paramètres & Import</h2>
+      <div class="grid two">
+        <div>
+          <h3>Tarifs & Abonnements</h3>
+          <form id="form-tariffs" class="stack">
+            <fieldset>
+              <legend>Tarifs électricité (€/kWh)</legend>
+              <label>Tarif Base (€/kWh)
+                <input type="number" id="price-base" step="0.0001" min="0" value="0.2069" />
+              </label>
+              <label>Tarif HP (€/kWh)
+                <input type="number" id="price-hp" step="0.0001" min="0" value="0.2520" />
+              </label>
+              <label>Tarif HC (€/kWh)
+                <input type="number" id="price-hc" step="0.0001" min="0" value="0.2060" />
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>Coût abonnement (€/mois)</legend>
+              <label>Abonnement Base
+                <input type="number" id="fixed-base" step="0.01" min="0" value="12.50" />
+              </label>
+              <label>Abonnement HP/HC
+                <input type="number" id="fixed-hphc" step="0.01" min="0" value="14.00" />
+              </label>
+            </fieldset>
+            <fieldset>
+              <legend>Horaires Heures Creuses</legend>
+              <p class="help">Ajoutez un ou plusieurs créneaux par jour au format <code>HH:MM-HH:MM</code>. Exemple: <code>22:00-06:00</code> ou <code>12:30-14:30</code>.</p>
+              <div id="hc-intervals" class="stack"></div>
+              <div class="row">
+                <input type="text" id="hc-new" placeholder="22:00-06:00" />
+                <button type="button" id="btn-add-hc" class="btn">Ajouter</button>
+              </div>
+            </fieldset>
+            <div class="row right">
+              <button type="submit" class="btn primary">Enregistrer les paramètres</button>
+            </div>
+          </form>
+        </div>
+        <div>
+          <h3>Import des données</h3>
+          <div class="card">
+            <h4>Consommation</h4>
+            <p>CSV ou Excel (.xls, .xlsx). Colonnes attendues: <em>horodatage</em>, <em>valeur</em>, <em>unité (optionnel)</em>.</p>
+            <input type="file" id="file-consumption" accept=".csv,.xls,.xlsx" />
+            <div id="consumption-import-log" class="log"></div>
+          </div>
+          <div class="card">
+            <h4>Production réelle (optionnel)</h4>
+            <input type="file" id="file-production" accept=".csv,.xls,.xlsx" />
+            <div id="production-import-log" class="log"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-summary" class="view">
+      <h2>Synthèse</h2>
+      <div class="grid two">
+        <div>
+          <div class="card">
+            <h3>Répartition % HP / HC</h3>
+            <div id="pie-hphc" class="chart"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Indicateurs</h3>
+            <div class="kpis">
+              <div class="kpi"><div class="kpi-label">Total énergie</div><div class="kpi-value" id="kpi-total">—</div></div>
+              <div class="kpi"><div class="kpi-label">Facture Base</div><div class="kpi-value" id="kpi-bill-base">—</div></div>
+              <div class="kpi"><div class="kpi-label">Facture HP/HC</div><div class="kpi-value" id="kpi-bill-hphc">—</div></div>
+              <div class="kpi"><div class="kpi-label">Économies</div><div class="kpi-value" id="kpi-savings">—</div></div>
+              <div class="kpi"><div class="kpi-label">Signal</div><div class="kpi-value" id="kpi-signal">—</div></div>
+            </div>
+            <div class="filters">
+              <label>Plage:
+                <select id="period-select">
+                  <option value="all">Toutes les données</option>
+                  <option value="year">Année…</option>
+                  <option value="month">Mois…</option>
+                </select>
+              </label>
+              <label id="year-select-wrap" class="hidden">Année:
+                <select id="year-select"></select>
+              </label>
+              <label id="month-select-wrap" class="hidden">Mois:
+                <select id="month-select"></select>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-consumption" class="view">
+      <h2>Consommation</h2>
+      <p class="muted">Astuce: cliquez sur un mois dans l'histogramme pour voir les détails jour par jour.</p>
+      <div class="filters inline">
+        <label>Année:
+          <select id="cons-year-select"></select>
+        </label>
+        <label>Mois:
+          <select id="cons-month-select"></select>
+        </label>
+      </div>
+      <div class="card">
+        <h3 id="cons-chart-title">Consommation mensuelle (kWh) — empilé HP/HC<span id="pv-label" class="hidden"> + PV autoconsommée</span></h3>
+        <div id="bar-monthly" class="chart"></div>
+        <div class="row hidden" id="btn-back-month-wrap"><button class="btn" id="btn-back-month">Revenir à l'annuel</button></div>
+      </div>
+    </section>
+
+    <section id="view-production" class="view">
+      <h2>Production</h2>
+      <div class="grid two">
+        <div>
+          <div class="card">
+            <h3>Production réelle</h3>
+            <div id="prod-real-chart" class="chart"></div>
+          </div>
+          <div class="card">
+            <h3>Production solaire théorique</h3>
+            <form id="form-solar" class="stack">
+              <label>Inclinaison (°)
+                <input type="number" id="tilt" min="0" max="90" step="1" value="30" />
+              </label>
+              <label>Puissance crête totale (W)
+                <input type="number" id="pv-power" min="0" step="50" value="3000" />
+              </label>
+              <div class="row wrap">
+                <button class="btn" id="btn-geo" type="button">📍 Me géolocaliser</button>
+                <input type="text" id="city-search" placeholder="Ville (France)" />
+                <input type="number" id="lat" step="0.000001" placeholder="Latitude" />
+                <input type="number" id="lon" step="0.000001" placeholder="Longitude" />
+              </div>
+              <div class="row">
+                <label><input type="checkbox" id="overlay-real-theory" /> Superposer réelle & théorique</label>
+              </div>
+              <div class="row right">
+                <button class="btn primary" type="submit">Mettre à jour</button>
+              </div>
+            </form>
+            <div id="solar-chart" class="chart"></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <h3>Données & synchronisation</h3>
+            <ul class="muted">
+              <li>Le graphique théorique se synchronise avec la période sélectionnée dans l'onglet Consommation.</li>
+              <li>Double échelle: Durée d'ensoleillement (h), Lever/Coucher du soleil (heures).</li>
+              <li>Astro local <em>(offline)</em> basé sur le jour julien et l'équation du temps.</li>
+            </ul>
+            <div id="solar-info" class="log"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>© 2026 — Projet libre (CC BY 4.0). Fonctionne 100% en local. Aucun stockage distant.</small>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+  <script>/* XLSX stub for offline Excel support */</script>
+  <script src="js/utils/xlsx-stub.js"></script>
+</body>
+</html>
