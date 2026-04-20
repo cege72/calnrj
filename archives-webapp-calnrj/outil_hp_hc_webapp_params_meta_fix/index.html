@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comparateur HP/HC + Solaire — en ligne (client‑side)</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header>
+  <h1>Comparateur HP/HC + Solaire — d’après vos données ENEDIS/Onduleur</h1>
+  <p class="tag">Tout se calcule <strong>localement</strong> dans votre navigateur. Aucune donnée n’est envoyée.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>1) Paramètres tarifs & abonnements</h2>
+    <div class="grid">
+      <label>Prix Base (€/kWh)
+        <input id="prix_base" type="number" step="0.0001" min="0" placeholder="ex. 0.251" />
+      </label>
+      <label>Prix Heures Creuses (€/kWh)
+        <input id="prix_hc" type="number" step="0.0001" min="0" placeholder="ex. 0.182" />
+      </label>
+      <label>Prix Heures Pleines (€/kWh)
+        <input id="prix_hp" type="number" step="0.0001" min="0" placeholder="ex. 0.294" />
+      </label>
+      <label>Abonnement Base (€/mois)
+        <input id="abo_base" type="number" step="0.01" min="0" placeholder="optionnel" />
+      </label>
+      <label>Abonnement HP/HC (€/mois)
+        <input id="abo_hphc" type="number" step="0.01" min="0" placeholder="optionnel" />
+      </label>
+      <label>Heure de référence pour classer l'intervalle
+        <select id="ref_time">
+          <option value="start">Début d’intervalle</option>
+          <option value="mid" selected>Milieu d’intervalle</option>
+          <option value="end">Fin d’intervalle</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="hc-box">
+      <h3>Plages Heures Creuses (quotidien)</h3>
+      <div id="hc-list"></div>
+      <button id="btn-add-hc" class="sec">+ Ajouter une plage</button>
+    </div>
+
+    <div class="actions">
+      <button id="btn-save" class="pri">💾 Sauvegarder les paramètres</button>
+      <button id="btn-clear" class="sec">Effacer les paramètres</button>
+    </div>
+  </section>
+
+  <section class="panel" id="drop-zone" style="border:2px dashed #9fb3c8; padding:16px;">
+    <h2>2) Import des données</h2>
+
+    <div class="grid three">
+      <div>
+        <label><strong>CSV Consommation (ENEDIS)</strong>
+          <input id="file-import" type="file" />
+        </label>
+        <div class="overrides">
+          <label>Unité (forcer)
+            <select id="ov-unit-import">
+              <option value="">Auto</option>
+              <option>W</option>
+              <option>Wh</option>
+              <option>kWh</option>
+              <option>kW</option>
+            </select>
+          </label>
+          <label>Pas (min)
+            <input id="ov-step-import" type="number" min="1" step="1" placeholder="Auto"/>
+          </label>
+        </div>
+        <div id="preview-import" class="preview"></div>
+      </div>
+
+      <div>
+        <label><strong>CSV Injection (optionnel)</strong>
+          <input id="file-export" type="file" />
+        </label>
+        <div class="overrides">
+          <label>Unité (forcer)
+            <select id="ov-unit-export">
+              <option value="">Auto</option>
+              <option>W</option>
+              <option>Wh</option>
+              <option>kWh</option>
+              <option>kW</option>
+            </select>
+          </label>
+          <label>Pas (min)
+            <input id="ov-step-export" type="number" min="1" step="1" placeholder="Auto"/>
+          </label>
+        </div>
+        <div id="preview-export" class="preview"></div>
+      </div>
+
+      <div>
+        <label><strong>CSV Production PV (optionnel)</strong>
+          <input id="file-pv" type="file" />
+        </label>
+        <div class="overrides">
+          <label>Unité (forcer)
+            <select id="ov-unit-pv">
+              <option value="">Auto</option>
+              <option>W</option>
+              <option>Wh</option>
+              <option>kWh</option>
+              <option>kW</option>
+            </select>
+          </label>
+          <label>Pas (min)
+            <input id="ov-step-pv" type="number" min="1" step="1" placeholder="Auto"/>
+          </label>
+        </div>
+        <div id="preview-pv" class="preview"></div>
+      </div>
+    </div>
+
+    <div id="import_diag" class="diag"></div>
+    <p id="file-info" class="muted">Astuce : si l’unité/pas est erroné, force‑le puis modifie‑le : la page recalcule instantanément.</p>
+  </section>
+
+  <section class="panel">
+    <h2>3) Résultats</h2>
+    <div id="results" class="results hidden">
+      <div class="grid-3">
+        <div class="kpi"><div class="kpi-label">Énergie totale importée (réseau)</div><div class="kpi-val" id="tot_import">–</div></div>
+        <div class="kpi"><div class="kpi-label">Production PV (totale)</div><div class="kpi-val" id="tot_pv">–</div></div>
+        <div class="kpi"><div class="kpi-label">Injection (export)</div><div class="kpi-val" id="tot_export">–</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="kpi"><div class="kpi-label">PV autoconsommée</div><div class="kpi-val" id="tot_pv_auto">–</div></div>
+        <div class="kpi"><div class="kpi-label">Charge (usage maison)</div><div class="kpi-val" id="tot_load">–</div></div>
+        <div class="kpi"><div class="kpi-label">Couverture PV de la charge</div><div class="kpi-val" id="pv_share">–</div></div>
+      </div>
+
+      <div class="grid">
+        <div>
+          <h3>Répartition HP / HC (import réseau)</h3>
+          <div id="pie" class="pie"></div>
+          <div id="pie_legend" class="legend"></div>
+        </div>
+        <div>
+          <h3>Avec abonnements (proratisés)</h3>
+          <table class="tbl">
+            <tbody>
+              <tr><th>Total Base</th><td id="tot_base_abos">–</td></tr>
+              <tr><th>Total HP/HC</th><td id="tot_hphc_abos">–</td></tr>
+              <tr><th>Économies (avec abos)</th><td id="eco_abos">–</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div style="min-width:320px">
+          <div class="chart-toolbar">
+            <h3>Consommation mensuelle (kWh) — empilé HP/HC + PV autoconsommée</h3>
+            <div class="toolbar-right">
+              <label for="year_select" class="muted" style="margin-right:6px">Année</label>
+              <select id="year_select"></select>
+            </div>
+          </div>
+          <div id="monthly_chart" class="bar"></div>
+          <div id="bar_legend" class="legend"></div>
+          <div class="actions"><button id="btn-export-monthly" class="sec">⬇️ Export mensuel (CSV)</button></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="btn-export" class="sec">⬇️ Export des données calculées (CSV)</button>
+      </div>
+    </div>
+    <p id="no-data" class="muted">Importez au moins le CSV Consommation (ENEDIS) pour commencer.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Fait pour Antoine • Fonctionne hors‑ligne • Aucune donnée envoyée</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

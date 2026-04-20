@@ -1,0 +1,1 @@
+export function render(){document.getElementById("content").innerHTML="<h2>Consommation</h2>";}

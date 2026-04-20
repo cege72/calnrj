@@ -1,0 +1,8 @@
+// csvParser.js — Module A
+import { state } from './state.js';
+function detectUnit(header){const h=header.toLowerCase();if(h.includes('kwh'))return 'kWh';if(h.includes('wh'))return 'Wh';if(h.includes('w'))return 'W';return 'W';}
+function toKWh(value,unit,stepHours){if(!value||value===0)return 0;switch(unit){case 'kWh':return parseFloat(value);case 'Wh':return parseFloat(value)/1000;case 'W':return parseFloat(value)*stepHours;default:return parseFloat(value)*stepHours;}}
+function detectStepMinutes(dates){if(dates.length<2)return 15;const diffMs=new Date(dates[1])-new Date(dates[0]);const diffMin=diffMs/60000;if(diffMin<=16)return 15;if(diffMin<=31)return 30;return 60;}
+export async function parseFile(file){const content=await file.text();const lines=content.split(/?
+/).filter(l=>l.trim()!=='');const header=lines[0].split(';');let dateCol=0;let valueCol=1;header.forEach((h,i)=>{if(h.toLowerCase().includes('date')||h.toLowerCase().includes('heure')||h.toLowerCase().includes('time'))dateCol=i;});const unit=detectUnit(header[valueCol]);const records=[];for(let i=1;i<lines.length;i++){const cols=lines[i].split(';');if(cols.length<2)continue;records.push({date:new Date(cols[dateCol]),raw:parseFloat(cols[valueCol])});}
+const stepMin=detectStepMinutes(records.map(r=>r.date));const stepHours=stepMin/60;const final=records.map(r=>({date:r.date,kwh:toKWh(r.raw,unit,stepHours)}));state.data={rawRecords:records,clean:final,unit,stepMin};return state.data;}
